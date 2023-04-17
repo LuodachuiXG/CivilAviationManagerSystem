@@ -30,7 +30,7 @@ object Tool {
      * @return
      */
     fun formatDate(date: Date): String {
-        var sdf: SimpleDateFormat
+        val sdf: SimpleDateFormat
         val cal = Calendar.getInstance()
         cal.time = date;
         val currentCal = Calendar.getInstance()

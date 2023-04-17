@@ -1,7 +1,7 @@
 package cc.loac.civilaviationmanagersystem
 
+import cc.loac.civilaviationmanagersystem.common.MyLinkList
 import cc.loac.civilaviationmanagersystem.common.Tool
-import cc.loac.civilaviationmanagersystem.myenum.OS
 import javafx.application.Application
 import javafx.fxml.FXMLLoader
 import javafx.scene.Scene
@@ -27,7 +27,11 @@ class HelloApplication : Application() {
  * 初始化
  */
 private fun init() {
-
+    val linkList = MyLinkList<String>()
+    linkList.add("Hello")
+    linkList.add("Kotlin")
+    println(linkList.size())
+    linkList.show()
 }
 
 fun main() {
