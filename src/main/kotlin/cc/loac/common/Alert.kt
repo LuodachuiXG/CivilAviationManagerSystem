@@ -1,4 +1,4 @@
-package common
+package cc.loac.common
 
 import javax.swing.JOptionPane
 

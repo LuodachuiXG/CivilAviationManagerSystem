@@ -1,4 +1,4 @@
-package myenum
+package cc.loac.myenum
 
 enum class OS {
     OS_WINDOW,

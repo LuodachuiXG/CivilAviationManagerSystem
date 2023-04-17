@@ -1,16 +1,8 @@
-package common
+package cc.loac.common
 
-import myenum.OS
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import cc.loac.myenum.OS
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.zip.Adler32
-import java.util.zip.CheckedOutputStream
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
-import kotlin.collections.ArrayList
 
 object Tool {
     // 获取 OS.NAME
@@ -38,7 +30,7 @@ object Tool {
      * @return
      */
     fun formatDate(date: Date): String {
-        var sdf: SimpleDateFormat
+        val sdf: SimpleDateFormat
         val cal = Calendar.getInstance()
         cal.time = date;
         val currentCal = Calendar.getInstance()

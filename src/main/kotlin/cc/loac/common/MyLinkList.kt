@@ -1,4 +1,4 @@
-package common
+package cc.loac.common
 
 /**
  * 链表 Node
@@ -13,7 +13,6 @@ class MyLinkList<T> {
     private var _length = 0
     // 链表头结点
     private var _head: Node<T>? = null
-
 
     /**
      * 获取链表最后一个结点
