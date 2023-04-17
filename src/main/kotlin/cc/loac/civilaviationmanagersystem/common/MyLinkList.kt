@@ -6,7 +6,7 @@ package cc.loac.civilaviationmanagersystem.common
 data class Node<T> (var t: T, var next: Node<T>?)
 
 /**
- * 链表
+ * 自定义链表类
  */
 class MyLinkList<T> {
     // 链表长度
@@ -31,6 +31,23 @@ class MyLinkList<T> {
         return temp
     }
 
+    /**
+     * 找到链表指定位置的前后元素
+     */
+    private fun getPreAndNext(i: Int, callBack: (pre: Node<T>?, next: Node<T>?) -> Unit) {
+        // 找到指定位置和前位置的索引
+        var j = 0
+        var pre: Node<T>? = null
+        var temp: Node<T>? = _head
+        while (j != i && temp != null) {
+            pre = temp
+            temp = temp.next
+            j++
+        }
+        // 回调
+        callBack(pre, temp)
+    }
+
 
     /**
      * 添加元素到链表
@@ -49,6 +66,83 @@ class MyLinkList<T> {
     }
 
     /**
+     * 删除链表中指定元素
+     */
+    fun delete(i: Int): Boolean {
+        // 删除位置非法
+        if (i > _length - 1 || i < 0) {
+            return false
+        }
+
+        if (i == 0) {
+            // 删除的是第一个元素
+            _head = _head?.next
+        } else {
+            // 找到指定位置和前位置的索引
+            getPreAndNext(i) { pre, next ->
+                // 删除指定位置元素
+                pre?.next = next?.next
+            }
+        }
+        _length--
+        return true
+    }
+
+    /**
+     * 在链表指定位置插入元素
+     */
+    fun insert(i: Int, t: T): Boolean {
+        // 插入位置非法
+        if (i > _length - 1 || i < 0) {
+            return false
+        }
+
+        // 包装新 Node
+        val node = Node(t, null)
+        if (i == 0) {
+            // 插入的是第一个位置
+            node.next = _head
+            _head = node
+        } else {
+            // 找到指定位置和前位置的索引
+            getPreAndNext(i) { pre, next ->
+                // 插入 node
+                node.next = next
+                pre?.next = node
+            }
+        }
+        _length++
+        return true
+    }
+
+    /**
+     * 获取指定元素
+     */
+    fun get(i: Int): T? {
+        // 索引位置非法
+        if (i > _length - 1 || i < 0) {
+            return null
+        }
+        var j = 0
+        var temp = _head
+        while (j != i && temp != null) {
+            temp = temp.next
+            j++
+        }
+        return temp?.t
+    }
+
+    /**
+     * 替换指定位置元素
+     */
+    fun replace(i: Int, t: T): Boolean {
+        // 先插入再删除
+        insert(i, t)
+        delete(i + 1)
+        return true
+    }
+
+    /**
      * 获取链表长度
      */
     fun size(): Int {
@@ -64,6 +158,19 @@ class MyLinkList<T> {
             println(temp.t)
             temp = temp.next
         }
+    }
+
+    /**
+     * 将列表数据包装成 List
+     */
+    fun asList(): List<T> {
+        var temp = _head
+        val list = ArrayList<T>()
+        while (temp != null) {
+            list.add(temp.t)
+            temp = temp.next
+        }
+        return list
     }
 
 }

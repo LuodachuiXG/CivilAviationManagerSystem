@@ -28,10 +28,6 @@ class HelloApplication : Application() {
  */
 private fun init() {
     val linkList = MyLinkList<String>()
-    linkList.add("Hello")
-    linkList.add("Kotlin")
-    println(linkList.size())
-    linkList.show()
 }
 
 fun main() {
