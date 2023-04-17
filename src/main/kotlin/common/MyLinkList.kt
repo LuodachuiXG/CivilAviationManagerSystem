@@ -1,4 +1,4 @@
-package cc.loac.civilaviationmanagersystem.common
+package common
 
 /**
  * 链表 Node
