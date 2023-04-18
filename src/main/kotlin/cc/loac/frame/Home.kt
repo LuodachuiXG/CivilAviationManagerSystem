@@ -1,8 +1,8 @@
 package cc.loac.frame
 
-import cc.loac.component.FlightInfo
-import cc.loac.component.FlightManager
-import cc.loac.component.UserService
+import cc.loac.component.FlightInfoPanel
+import cc.loac.component.FlightManagerPanel
+import cc.loac.component.UserServicePanel
 import cc.loac.dao.MyIni
 import java.awt.Dimension
 import java.awt.Point
@@ -64,9 +64,9 @@ class Home() : JFrame("Loac 民航管理器"), WindowListener {
      */
     private fun initComponent() {
         // 添加选项卡
-        tabbedPane.addTab("航班信息", FlightInfo())
-        tabbedPane.addTab("航班管理", FlightManager())
-        tabbedPane.addTab("客户服务", UserService())
+        tabbedPane.addTab("航班信息", FlightInfoPanel())
+        tabbedPane.addTab("航班管理", FlightManagerPanel())
+        tabbedPane.addTab("客户服务", UserServicePanel())
     }
 
 

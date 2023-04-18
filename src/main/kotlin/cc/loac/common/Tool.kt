@@ -37,10 +37,10 @@ object Tool {
         var result = ""
         sdf = if (cal.get(Calendar.YEAR) == currentCal.get(Calendar.YEAR)) {
             // 文件修改年份和当前年份一致
-            SimpleDateFormat("MM 月 dd 日")
+            SimpleDateFormat("MM 月 dd 日 HH:mm")
         } else {
             // 文件修改年份和当前年份不一致
-            SimpleDateFormat("yyyy 年 MM 月 dd 日")
+            SimpleDateFormat("yyyy 年 MM 月 dd 日 HH:mm")
         }
         result = sdf.format(date);
         return result;

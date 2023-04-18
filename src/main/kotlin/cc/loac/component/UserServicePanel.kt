@@ -3,9 +3,9 @@ package cc.loac.component
 import javax.swing.JPanel
 
 /**
- * 航班管理器面板
+ * 客户服务面板
  */
-class FlightManager : JPanel() {
+class UserServicePanel : JPanel() {
 
     init {
 
