@@ -7,19 +7,19 @@ import java.util.Date
  */
 data class FlightInfo(
     // 航班号
-    var id: String,
+    var id: String = "",
     // 出发地
-    var from: String,
+    var from: String = "",
     // 目的地
-    var to: String,
+    var to: String = "",
     // 起飞时间
-    var departureTime: Date,
+    var departureTime: Date = Date(),
     // 到达时间
-    var arrivalTime: Date,
+    var arrivalTime: Date = Date(),
     // 飞行时间
-    var flightTime: Int,
+    var flightTime: Int = 0,
     // 人数
-    var persons: Int,
+    var persons: Int = 0,
     // 票价
-    var price: Double
+    var price: Int = 0
 )

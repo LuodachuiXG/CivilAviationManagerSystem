@@ -1,28 +1,9 @@
 package cc.loac.common
 
-import cc.loac.myenum.OS
 import java.text.SimpleDateFormat
 import java.util.*
 
 object Tool {
-    // 获取 OS.NAME
-    private var OS_NAME: String = System.getProperty("os.name").uppercase()
-
-    /**
-     * 获取 OS.NAME
-     *
-     * @return OS
-     */
-    fun getOSName(): OS {
-        return if (OS_NAME.contains("WINDOWS")) {
-            OS.OS_WINDOW;
-        } else if (OS_NAME.contains("LINUX")) {
-            OS.OS_LINUX;
-        } else {
-            OS.OS_MACOS;
-        }
-    }
-
     /**
      * 格式化日期
      *
