@@ -171,5 +171,4 @@ class MyLinkList<T> {
         }
         return list
     }
-
 }

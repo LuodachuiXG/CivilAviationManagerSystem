@@ -10,6 +10,7 @@ import javax.swing.JFileChooser
 import javax.swing.filechooser.FileFilter
 import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.NumberFormatException
+import kotlin.collections.HashMap
 import kotlin.system.exitProcess
 
 val scan = Scanner(System.`in`)
@@ -83,7 +84,7 @@ private fun menuAddAviation() {
             println("1. 从文件导入")
             println("*. 返回")
         }
-        println("请输入你想要进行的操作：")
+        print("请输入你想要进行的操作：")
         when(getNumberFromConsole()) {
             0 -> {
                 // 添加航班到链表
@@ -105,7 +106,171 @@ private fun menuAddAviation() {
  * 从文件导入航班信息
  */
 private fun importAviationsFromFile() {
+    printFormat("从文件导入航班信息") {
+        println("从文件导入航班信息需要使用固定格式，否则导入失败，\n" +
+                "属性之间使用英文逗号分隔，不同航班数据换行分隔。\n" +
+                "下面是一个例子：\n\n" +
+                "MF123,南京,北京,2023-05-26 13:00,2023-05-26 15:00,240,1200\n\n" +
+                "从左往右依次为：\n" +
+                "航班号,出发地,目的地,起飞时间,到达时间,人数,票价。\n" +
+                "起飞和达到时间请严格按照格式填写，日期和时间之间一个空格，\n" +
+                "不要添加多余的字符，此格式与导出数据格式一致。\n\n")
+        println("1. 选择文件")
+        println("*. 返回")
+    }
+    print("请输入你想要进行的操作：")
+    val optionIndex = scan.next()
+    if (optionIndex != "1") {
+        return
+    }
 
+    // 选择文件
+    val file = selectFile()
+    if (file == null) {
+        println("选择的文件为空......")
+        return
+    }
+
+    // 读取文件并分析
+    val fileContent = file.readText()
+    // 把航班信息按换行符进行分割
+    val aviationSplit = fileContent.split("\n")
+
+    // 记录成功、失败、和非空格总数
+    var successCount = 0
+    var failureCount = 0
+    var count = 0
+
+    // 记录错误条数和错误原因
+    var failureMap = HashMap<String, String>()
+
+    // 遍历每行航班信息
+    for (i in aviationSplit.indices) {
+        val flightInfo = FlightInfo()
+        val aviationStr = aviationSplit[i]
+        if (aviationStr.isEmpty()) {
+            // 空行就跳过
+            continue
+        }
+
+        count++
+
+        // 分割航班信息的每个属性
+        val attr = aviationStr.split(",")
+        if (attr.size != 7) {
+            // 分割后长度小于 7，导入失败，跳过
+            failureCount++
+            failureMap[aviationStr] = "属性数量应为 7 条"
+            continue
+        }
+
+
+        flightInfo.id = attr[0]
+        flightInfo.from = attr[1]
+        flightInfo.to = attr[2]
+
+        // 出发日期和时间用空格分割
+        val departureSplit = attr[3].split(" ")
+        // 到达日期和时间用空格分割
+        val arrivalSplit = attr[4].split(" ")
+
+        // 出发或到达时间格式错误
+        if (departureSplit.size != 2 || arrivalSplit.size != 2) {
+            failureCount++
+            failureMap[aviationStr] = "出发或到达时间格式错误"
+            continue
+        }
+
+        // 分割出发日期
+        val departureDateSplit = departureSplit[0].split("-")
+        // 分割出发时间
+        val departureTimeSplit = departureSplit[1].split(":")
+
+        // 分割到达日期
+        val arrivalDateSplit = arrivalSplit[0].split("-")
+        // 分割到达时间
+        val arrivalTimeSplit = arrivalSplit[1].split(":")
+
+        // 日期格式错误
+        if (departureDateSplit.size != 3 || arrivalDateSplit.size != 3 ||
+            departureTimeSplit.size != 2 || arrivalTimeSplit.size != 2) {
+            failureCount++
+            failureMap[aviationStr] = "出发或到达时间格式错误"
+            continue
+        }
+
+        // 日期存在非数字属性
+        if (!isNumber(departureDateSplit[0]) || !isNumber(departureDateSplit[1]) || !isNumber(departureDateSplit[2]) ||
+            !isNumber(departureTimeSplit[0]) || !isNumber(departureTimeSplit[1]) ||
+            !isNumber(arrivalDateSplit[0]) || !isNumber(arrivalDateSplit[1]) || !isNumber(arrivalDateSplit[2]) ||
+            !isNumber(arrivalTimeSplit[0]) || !isNumber(arrivalTimeSplit[1])) {
+            failureCount++
+            failureMap[aviationStr] = "出发或到达时间存在非数字属性"
+            continue
+        }
+
+        val dYear = departureDateSplit[0].toInt()
+        val dMonth = departureDateSplit[1].toInt()
+        val dDay = departureDateSplit[2].toInt()
+        val dHour = departureTimeSplit[0].toInt()
+        val dMinute = departureTimeSplit[1].toInt()
+        // 出发时间异常
+        if (!checkMonthDay(dYear, dMonth, dDay) || dHour !in 0..23 || dMinute !in 0..59) {
+            failureCount++
+            failureMap[aviationStr] = "出发日期时间不正确"
+            continue
+        }
+
+        val aYear = arrivalDateSplit[0].toInt()
+        val aMonth = arrivalDateSplit[1].toInt()
+        val aDay = arrivalDateSplit[2].toInt()
+        val aHour = arrivalTimeSplit[0].toInt()
+        val aMinute = arrivalTimeSplit[1].toInt()
+        // 到达时间异常
+        if (!checkMonthDay(aYear, aMonth, aDay) || aHour !in 0..23 || aMinute !in 0..59) {
+            failureCount++
+            failureMap[aviationStr] = "到达日期时间不正确"
+            continue
+        }
+
+        // 到达和出发时间日期类
+        val calendarDeparture = Calendar.getInstance()
+        val calendarArrival = Calendar.getInstance()
+        calendarDeparture.set(dYear, dMonth - 1, dDay, dHour, dMinute)
+        calendarArrival.set(aYear, aMonth -1, aDay, aHour, aMinute)
+
+        flightInfo.departureTime = calendarDeparture.time
+        flightInfo.arrivalTime = calendarArrival.time
+
+        // 航班人数和票价不是数字
+        if (!isNumber(attr[5]) || !isNumber(attr[6])) {
+            failureCount++
+            failureMap[aviationStr] = "航班人数或票价不是数字"
+            continue
+        }
+
+
+        flightInfo.flightTime = ((flightInfo.arrivalTime.time - flightInfo.departureTime.time) / 60000).toInt()
+        if (flightInfo.flightTime <= 0) {
+            failureCount++
+            failureMap[aviationStr] = "到达时间不能在出发时间之前或等于出发时间"
+            continue
+        }
+        flightInfo.persons = attr[5].toInt()
+        flightInfo.price = attr[6].toInt()
+        aviations.add(flightInfo)
+        successCount++
+    }
+
+    // 如果有错误条数，打印错误原因
+    if (failureMap.size > 0) {
+        printFormat("从文件数据导入错误原因") {
+            failureMap.forEach { (k, v) ->
+                println("($k)：$v")
+            }
+        }
+    }
+    println("总行数：$count，成功：$successCount，失败：$failureCount")
 }
 
 
@@ -243,9 +408,9 @@ private fun getFromConsoleWhere(errMsg: String = "", block: (input: String) -> B
  */
 private fun printFormat(title: String, block: () -> Unit) {
     println()
-    println("—————————— $title ——————————")
+    println("———————————————— $title ————————————————")
     block()
-    println("————————— #$title# —————————")
+    println("——————————————— #$title# ———————————————")
 
 }
 
