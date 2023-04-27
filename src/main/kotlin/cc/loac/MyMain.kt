@@ -1,10 +1,14 @@
 package cc.loac
 
 import cc.loac.common.MyLinkList
+import cc.loac.common.Tool
 import cc.loac.pojo.FlightInfo
 import cc.loac.pojo.Order
-import java.text.SimpleDateFormat
+import java.io.File
 import java.util.*
+import javax.swing.JFileChooser
+import javax.swing.filechooser.FileFilter
+import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.NumberFormatException
 import kotlin.system.exitProcess
 
@@ -60,6 +64,13 @@ private fun menuShowAviation() = printFormat("显示航班信息") {
         println("航班信息为空，请先添加航班")
         return@printFormat
     }
+
+    val list = aviations.asList()
+    println("航班号\t出发地\t目的地\t\t起飞时间\t\t到达时间\t\t飞行时间（分钟）\t\t人数\t\t票价（元）\n")
+    list.forEach {
+        println("${it.id}\t\t${it.from}\t${it.to}\t${Tool.formatDate(it.departureTime)}\t\t" +
+                "${Tool.formatDate(it.arrivalTime)}\t\t${it.flightTime}分钟\t\t${it.persons}人\t\t${it.price}元\n")
+    }
 }
 
 /**
@@ -78,16 +89,40 @@ private fun menuAddAviation() {
                 // 添加航班到链表
                 aviations.add(packageFlightInfoFromConsole())
                 println("航班添加成功！目前航班数量：${aviations.size()}")
-                val f = aviations.get(0)
-                println(f)
-                val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm")
-                println(sdf.format(f!!.departureTime))
             }
-            1 -> {}
+            1 -> {
+                // 从文件导入航班信息
+                importAviationsFromFile()
+            }
             else -> break
         }
     }
 
+}
+
+
+/**
+ * 从文件导入航班信息
+ */
+private fun importAviationsFromFile() {
+
+}
+
+
+/**
+ * 选择文件
+ */
+private fun selectFile(): File? {
+    val jFileChooser = JFileChooser()
+    jFileChooser.dialogTitle = "选择要导入的文件"
+    jFileChooser.fileSelectionMode = JFileChooser.FILES_ONLY
+    jFileChooser.fileFilter = FileNameExtensionFilter("文本文件 (*.txt)", "txt")
+
+    return if (jFileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+        jFileChooser.selectedFile
+    } else {
+        null
+    }
 }
 
 /**
