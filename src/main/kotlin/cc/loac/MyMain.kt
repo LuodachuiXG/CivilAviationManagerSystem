@@ -88,8 +88,10 @@ private fun menuAddAviation() {
         when(getNumberFromConsole()) {
             0 -> {
                 // 添加航班到链表
-                aviations.add(packageFlightInfoFromConsole())
-                println("航班添加成功！目前航班数量：${aviations.size()}")
+                packageFlightInfoFromConsole()?.let {
+                    aviations.add(it)
+                    println("航班添加成功！目前航班数量：${aviations.size()}")
+                }
             }
             1 -> {
                 // 从文件导入航班信息
@@ -313,11 +315,11 @@ private fun selectFile(): File? {
 /**
  * 从控制台输入封装 FlightInfo 实体对象
  */
-private fun packageFlightInfoFromConsole(): FlightInfo {
+private fun packageFlightInfoFromConsole(): FlightInfo? {
     val flightInfo = FlightInfo()
     println("下面将开始录入航班信息，请根据要求逐一输入")
     print("航班号（String）：")
-    flightInfo.id = scan.next()
+    flightInfo.id = getFromConsoleWhere("航班号已存在") { i -> !isAviationContains(i) }
     print("出发地（String)：")
     flightInfo.from = scan.next()
     print("目的地（String)：")
@@ -327,6 +329,11 @@ private fun packageFlightInfoFromConsole(): FlightInfo {
 
     // 飞行时间
     flightInfo.flightTime = ((flightInfo.arrivalTime.time - flightInfo.departureTime.time) / 60000).toInt()
+
+    if (flightInfo.flightTime <= 0) {
+        println("出发时间不能在起飞时间之前或等于起飞时间，导入错误......")
+        return null
+    }
 
     // 人数位于 1 到 240 之间
     print("航班人数（Int，最大 240 人)：")
