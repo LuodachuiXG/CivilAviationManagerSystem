@@ -5,6 +5,7 @@ import cc.loac.common.Tool
 import cc.loac.pojo.FlightInfo
 import cc.loac.pojo.Order
 import java.io.File
+import java.text.SimpleDateFormat
 import java.util.*
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileFilter
@@ -44,7 +45,7 @@ fun showOptionMenu() {
             0 -> menuShowAviation(aviations.asList())
             1 -> menuSearchAviation()
             2 -> menuAddAviation()
-            3 -> {}
+            3 -> menuExportAviations()
             4 -> {}
             5 -> {}
             6 -> {}
@@ -56,7 +57,6 @@ fun showOptionMenu() {
         }
     }
 }
-
 
 /**
  * 菜单项 —— 打印航班信息
@@ -139,6 +139,57 @@ private fun menuAddAviation() {
         }
     }
 
+}
+
+
+/**
+ * 菜单项 —— 导出航班信息
+ */
+private fun menuExportAviations() {
+    if (aviations.size() <= 0) {
+        println("航班信息为空，无法导出......")
+        return
+    }
+
+    printFormat("导出航班信息") {
+        println("选择导出目录......")
+    }
+
+    val jFileChooser = JFileChooser().apply {
+        dialogTitle = "选择导出目录"
+        fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+    }
+
+    // 没有选择导出目录
+    if (jFileChooser.showOpenDialog(null) != JFileChooser.APPROVE_OPTION) {
+        println("你没有选择导出目录......")
+        return
+    }
+
+    print("输入导出的文件名（无需后缀）：")
+    val fileName = scan.next()
+    // 封装按导出的文件 File
+    val file = File(jFileChooser.selectedFile.absolutePath + File.separator + fileName + ".txt")
+
+    val list = aviations.asList()
+    val writeStr = StringBuffer()
+    val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm")
+    list.forEach {
+        writeStr.append("${it.id},")
+        writeStr.append("${it.from},")
+        writeStr.append("${it.to},")
+        writeStr.append("${sdf.format(it.departureTime)},")
+        writeStr.append("${sdf.format(it.arrivalTime)},")
+        writeStr.append("${it.persons},")
+        writeStr.append("${it.price}")
+        writeStr.append("\n")
+    }
+    try {
+        file.writeText(writeStr.toString())
+        println("导出成功，${file.absolutePath}")
+    } catch (e: Exception) {
+        print("导出失败，${e.message}")
+    }
 }
 
 /**
