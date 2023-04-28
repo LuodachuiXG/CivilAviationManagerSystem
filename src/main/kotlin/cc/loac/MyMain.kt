@@ -10,6 +10,7 @@ import javax.swing.JFileChooser
 import javax.swing.filechooser.FileFilter
 import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.NumberFormatException
+import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.system.exitProcess
 
@@ -40,8 +41,8 @@ fun showOptionMenu() {
         print("请输入你想要进行的操作：")
 
         when (getNumberFromConsole()) {
-            0 -> menuShowAviation()
-            1 -> {}
+            0 -> menuShowAviation(aviations.asList())
+            1 -> menuSearchAviation()
             2 -> menuAddAviation()
             3 -> {}
             4 -> {}
@@ -60,18 +61,55 @@ fun showOptionMenu() {
 /**
  * 菜单项 —— 打印航班信息
  */
-private fun menuShowAviation() = printFormat("显示航班信息") {
-    if (aviations.size() == 0) {
-        println("航班信息为空，请先添加航班")
+private fun menuShowAviation(mList: List<FlightInfo>? = null) = printFormat("显示航班信息") {
+    val list = (mList ?: listOf())
+    if (list.isEmpty()) {
+        println("航班信息为空......")
         return@printFormat
     }
 
-    val list = aviations.asList()
     println("航班号\t出发地\t目的地\t\t起飞时间\t\t到达时间\t\t飞行时间（分钟）\t\t人数\t\t票价（元）\n")
     list.forEach {
         println("${it.id}\t\t${it.from}\t${it.to}\t${Tool.formatDate(it.departureTime)}\t\t" +
                 "${Tool.formatDate(it.arrivalTime)}\t\t${it.flightTime}分钟\t\t${it.persons}人\t\t${it.price}元\n")
     }
+}
+
+/**
+ * 菜单项 —— 查找航班信息
+ */
+private fun menuSearchAviation() {
+    while (true) {
+        printFormat("查找航班") {
+            println("0. 按航班号查找")
+            println("1. 按航班日期查询")
+            println("2. 按出发地查找")
+            println("3. 按目的地查找")
+            println("*. 返回")
+        }
+        print("请输入你想要进行的操作：")
+        when (getNumberFromConsole()) {
+            // 按航班号查找
+            0 -> {
+                // 如果查询结果为空就返回空数组
+                val flightInfo = getAviationById()
+                if (flightInfo == null) {
+                    menuShowAviation()
+                } else {
+                    menuShowAviation(listOf(flightInfo))
+                }
+            }
+            // 按航班日期查找
+            1 -> menuShowAviation(getAviationByDate())
+            // 按出发地查找
+            2 -> menuShowAviation(getAviationByFrom())
+            // 按目的地查找
+            3 -> menuShowAviation(getAviationByTo())
+            else -> return
+        }
+    }
+
+
 }
 
 /**
@@ -103,6 +141,78 @@ private fun menuAddAviation() {
 
 }
 
+/**
+ * 根据航班号查找航班信息
+ */
+private fun getAviationById(): FlightInfo? {
+    print("输入航班号：")
+    val id = scan.next()
+    val list = aviations.asList()
+    list.forEach {
+        if (it.id == id) {
+            return it
+        }
+    }
+    return null
+}
+
+
+/**
+ * 按航班日期查询
+ */
+private fun getAviationByDate(): List<FlightInfo> {
+    val listResult = ArrayList<FlightInfo>()
+    printFormat("按航班日期查询") {
+        val date = packageDateFromConsole("查询", false)
+        // 将要查找的时间封装成 Calendar 对象
+        val searchCal = Calendar.getInstance().apply { this.time = date }
+
+        val list = aviations.asList()
+        list.forEach {
+            // 将当前航班的起飞时间封装成 Calendar 对象
+            val departureCal = Calendar.getInstance().apply { this.time = it.departureTime }
+            // 日期相同
+            if (departureCal.get(Calendar.YEAR) == searchCal.get(Calendar.YEAR) &&
+                departureCal.get(Calendar.MONTH) == searchCal.get(Calendar.MONTH) &&
+                departureCal.get(Calendar.DAY_OF_MONTH) == searchCal.get(Calendar.DAY_OF_MONTH)) {
+                listResult.add(it)
+            }
+        }
+    }
+    return listResult
+}
+
+/**
+ * 按出发地查询
+ */
+private fun getAviationByFrom(): List<FlightInfo> {
+    print("输入出发地：")
+    val from = scan.next()
+    val listResult = ArrayList<FlightInfo>()
+    val list = aviations.asList()
+    list.forEach {
+        if (it.from == from) {
+            listResult.add(it)
+        }
+    }
+    return listResult
+}
+
+/**
+ * 按目的地查询
+ */
+private fun getAviationByTo(): List<FlightInfo> {
+    print("输入目的地：")
+    val to = scan.next()
+    val listResult = ArrayList<FlightInfo>()
+    val list = aviations.asList()
+    list.forEach {
+        if (it.to == to) {
+            listResult.add(it)
+        }
+    }
+    return listResult
+}
 
 /**
  * 从文件导入航班信息
@@ -347,8 +457,9 @@ private fun packageFlightInfoFromConsole(): FlightInfo? {
 
 /**
  * 从控制台输入封装 Date 实体对象
+ * @param hourAMinute 是否包括时和分
  */
-private fun packageDateFromConsole(str: String): Date {
+private fun packageDateFromConsole(str: String, hourAMinute: Boolean = true): Date {
     val cal = Calendar.getInstance()
 
     // 年份必须位于 1970 到 2099 之间
@@ -362,16 +473,27 @@ private fun packageDateFromConsole(str: String): Date {
     // 日必须准确
     print("${str}时间 —— 日（Int)：")
     val day = getIntFromConsoleWhere("日期有误") { d -> checkMonthDay(year, month, d) }
-    // 时必须位于 0 到 23 之间
-    print("${str}时间 —— 时（Int，24 时)：")
-    val hour = getIntFromConsoleWhere("时间有误") { h -> h in 0..23  }
 
-    // 分必须位于 0 到 59 之间
-    print("${str}时间 —— 分（Int)：")
-    val minute = getIntFromConsoleWhere("时间有误") { m -> m in 0..59  }
+
+    var hour = 0
+    var minute = 0
+    if (hourAMinute) {
+        // 时必须位于 0 到 23 之间
+        print("${str}时间 —— 时（Int，24 时)：")
+        hour = getIntFromConsoleWhere("时间有误") { h -> h in 0..23  }
+
+        // 分必须位于 0 到 59 之间
+        print("${str}时间 —— 分（Int)：")
+        minute = getIntFromConsoleWhere("时间有误") { m -> m in 0..59  }
+    }
 
     // 将读取的日期设置到 cal
-    cal.set(year, month - 1, day, hour, minute)
+    if (hourAMinute) {
+        cal.set(year, month - 1, day, hour, minute)
+    } else {
+        cal.set(year, month - 1, day)
+    }
+
     return Date(cal.timeInMillis)
 }
 
