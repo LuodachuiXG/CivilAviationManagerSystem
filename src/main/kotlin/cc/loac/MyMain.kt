@@ -142,7 +142,7 @@ private fun importAviationsFromFile() {
     var count = 0
 
     // 记录错误条数和错误原因
-    var failureMap = HashMap<String, String>()
+    val failureMap = HashMap<String, String>()
 
     // 遍历每行航班信息
     for (i in aviationSplit.indices) {
@@ -168,6 +168,13 @@ private fun importAviationsFromFile() {
         flightInfo.id = attr[0]
         flightInfo.from = attr[1]
         flightInfo.to = attr[2]
+
+        if (isAviationContains(flightInfo.id)) {
+            // 航班号已经存在，导入失败
+            failureCount++
+            failureMap[aviationStr] = "航班号已存在"
+            continue
+        }
 
         // 出发日期和时间用空格分割
         val departureSplit = attr[3].split(" ")
@@ -264,13 +271,26 @@ private fun importAviationsFromFile() {
 
     // 如果有错误条数，打印错误原因
     if (failureMap.size > 0) {
-        printFormat("从文件数据导入错误原因") {
+        printFormat("从文件导入错误条数") {
             failureMap.forEach { (k, v) ->
                 println("($k)：$v")
             }
         }
     }
     println("总行数：$count，成功：$successCount，失败：$failureCount")
+}
+
+/**
+ * 检查航班号是否已经存在
+ */
+private fun isAviationContains(id: String): Boolean {
+    val list = aviations.asList()
+    list.forEach {
+        if (id == it.id) {
+            return true
+        }
+    }
+    return false
 }
 
 
@@ -335,7 +355,6 @@ private fun packageDateFromConsole(str: String): Date {
     // 日必须准确
     print("${str}时间 —— 日（Int)：")
     val day = getIntFromConsoleWhere("日期有误") { d -> checkMonthDay(year, month, d) }
-
     // 时必须位于 0 到 23 之间
     print("${str}时间 —— 时（Int，24 时)：")
     val hour = getIntFromConsoleWhere("时间有误") { h -> h in 0..23  }
