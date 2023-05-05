@@ -53,7 +53,7 @@ fun showOptionMenu() {
             // 删除航班
             4 -> menuDelAviation()
             // 订票
-            5 -> {}
+            5 -> menuBook()
             // 退票
             6 -> {}
             // 改签
@@ -70,17 +70,19 @@ fun showOptionMenu() {
 /**
  * 菜单项 —— 打印航班信息
  */
-private fun menuShowAviation(mList: List<FlightInfo>? = null) = printFormat("显示航班信息") {
+private fun menuShowAviation(mList: List<FlightInfo>? = null, showIndex: Boolean = false, title: String = "显示航班信息") = printFormat(title) {
     val list = (mList ?: listOf())
     if (list.isEmpty()) {
         println("航班信息为空......")
         return@printFormat
     }
 
-    println("航班号\t出发地\t目的地\t\t起飞时间\t\t到达时间\t\t飞行时间（分钟）\t\t人数\t\t票价（元）\n")
+    println("${if (showIndex) "航班索引\t\t" else ""}航班号\t出发地\t目的地\t\t起飞时间\t\t到达时间\t\t飞行时间（分钟）\t\t人数\t\t票价（元）\n")
+    var index = 0
     list.forEach {
-        println("${it.id}\t\t${it.from}\t${it.to}\t${Tool.formatDate(it.departureTime)}\t\t" +
+        println("${if (showIndex) "\t\t$index" else ""}${it.id}\t\t${it.from}\t${it.to}\t${Tool.formatDate(it.departureTime)}\t\t" +
                 "${Tool.formatDate(it.arrivalTime)}\t\t${it.flightTime}分钟\t\t${it.persons}人\t\t${it.price}元\n")
+        index++
     }
 }
 
@@ -238,6 +240,67 @@ private fun menuDelAviation() {
         }
         println("删除航班数量：$delCount")
     }
+}
+
+
+/**
+ * 菜单项 —— 订票
+ */
+private fun menuBook() {
+    while (true) {
+        printFormat("订购机票") {
+            println("0. 订购机票")
+            println("*. 返回")
+        }
+        print("请输入你想要进行的操作：")
+
+        when (getNumberFromConsole()) {
+            // 订购机票
+            0 -> {
+                print("请输入出发地：")
+                val from = scan.next();
+                print("请输入目的地：")
+                val to = scan.next()
+                val date = packageDateFromConsole("订票", false)
+                val aviationList = getAviationByFromAToADate(from, to, date)
+                if (aviationList.isEmpty()) {
+                    println("没有查到符合的航班......")
+                    continue
+                }
+
+                // 打印查询到的航班
+                menuShowAviation(aviationList, true,"查询到的航班信息")
+            }
+            else -> break
+        }
+    }
+}
+
+/**
+ * 根据出发地、目的地和日期查找航班信息
+ */
+private fun getAviationByFromAToADate(from: String, to: String, date: Date): List<FlightInfo> {
+    val list = ArrayList<FlightInfo>()
+    if (aviations.isEmpty()) {
+        return list
+    }
+    // 根据查询 Date 封装成 Calendar 对象
+    val searchCal = Calendar.getInstance().apply {
+        time = date
+    }
+    aviations.asList().forEach {
+        val aviationCal = Calendar.getInstance().apply {
+            time = it.departureTime
+        }
+
+        // 出发地、目的地和航班日期匹配
+        if (it.from == from && it.to == to &&
+            aviationCal.get(Calendar.YEAR) == searchCal.get(Calendar.YEAR) &&
+            aviationCal.get(Calendar.MONTH) == searchCal.get(Calendar.MONTH) &&
+            aviationCal.get(Calendar.DAY_OF_MONTH) == searchCal.get(Calendar.DAY_OF_MONTH))
+            list.add(it)
+    }
+    return list
 }
 
 /**

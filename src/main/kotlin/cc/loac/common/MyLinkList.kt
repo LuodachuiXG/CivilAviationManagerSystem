@@ -117,6 +117,8 @@ class MyLinkList<T> {
                 delCount++
                 _length--
             } else {
+                // 不符合条件（未删除元素）才把 temp 赋给 pre
+                // 如果删除了元素就不改变 pre
                 pre = temp
             }
             temp = temp.next
