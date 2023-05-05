@@ -8,11 +8,13 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.swing.JFileChooser
-import javax.swing.filechooser.FileFilter
 import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.NumberFormatException
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
+import kotlin.math.abs
+import kotlin.random.Random
+import kotlin.random.nextInt
 import kotlin.system.exitProcess
 
 val scan = Scanner(System.`in`)
@@ -37,6 +39,7 @@ fun showOptionMenu() {
             println("5. 订票")
             println("6. 退票")
             println("7. 改签")
+            println("8. 查询订单")
             println("*. 退出系统")
         }
         print("请输入你想要进行的操作：")
@@ -55,9 +58,11 @@ fun showOptionMenu() {
             // 订票
             5 -> menuBook()
             // 退票
-            6 -> {}
+            6 -> menuRefund()
             // 改签
-            7 -> {}
+            7 -> menuRebook()
+            // 查询订单
+            8 -> menuSearchOrder()
             // 退出系统
             else -> {
                 println("退出系统......")
@@ -80,7 +85,7 @@ private fun menuShowAviation(mList: List<FlightInfo>? = null, showIndex: Boolean
     println("${if (showIndex) "航班索引\t\t" else ""}航班号\t出发地\t目的地\t\t起飞时间\t\t到达时间\t\t飞行时间（分钟）\t\t人数\t\t票价（元）\n")
     var index = 0
     list.forEach {
-        println("${if (showIndex) "\t\t$index" else ""}${it.id}\t\t${it.from}\t${it.to}\t${Tool.formatDate(it.departureTime)}\t\t" +
+        println("${if (showIndex) "$index\t\t" else ""}${it.id}\t\t${it.from}\t${it.to}\t${Tool.formatDate(it.departureTime)}\t\t" +
                 "${Tool.formatDate(it.arrivalTime)}\t\t${it.flightTime}分钟\t\t${it.persons}人\t\t${it.price}元\n")
         index++
     }
@@ -257,23 +262,174 @@ private fun menuBook() {
         when (getNumberFromConsole()) {
             // 订购机票
             0 -> {
-                print("请输入出发地：")
-                val from = scan.next();
-                print("请输入目的地：")
-                val to = scan.next()
-                val date = packageDateFromConsole("订票", false)
-                val aviationList = getAviationByFromAToADate(from, to, date)
-                if (aviationList.isEmpty()) {
-                    println("没有查到符合的航班......")
+                // 从控制台获取用户想要订购的机票
+                val aviation = getAviationByConsole() ?: continue
+                // 从控制台输入封装 Order 实体类
+                val order = packageOrderFromConsole(aviation.id, aviation.price)
+                if (isOrderContain(order)) {
+                    // 订单已经存在，订票失败
+                    println("订单已存在，订票失败......")
                     continue
                 }
 
-                // 打印查询到的航班
-                menuShowAviation(aviationList, true,"查询到的航班信息")
+                orders.add(order)
+                println("订票成功，票价：${aviation.price}")
             }
             else -> break
         }
     }
+}
+
+/**
+ * 菜单项 —— 退票
+ */
+private fun menuRefund() {
+    if (orders.isEmpty()) {
+        println("订单信息为空，无法使用退票功能......")
+        return
+    }
+
+    print("请输入订票人手机号：")
+    val tel = getFromConsoleWhere("手机号有误") { isNumber(it) }
+    val orderList = getOrderByTel(tel)
+    if (orderList.isEmpty()) {
+        println("订单为空......")
+        return
+    }
+
+    showOrder(orderList, true)
+    print("请输入要退的票的订单索引号（输入 -1 退出）：")
+    val orderIndex = getFromConsoleWhere("订单索引有误") { isNumber(it) && it.toInt() >= -1 && it.toInt() < orderList.size }
+    if (orderIndex.toInt()== -1) {
+        return
+    }
+
+    val order = orderList[orderIndex.toInt()]
+    val delCount = orders.deleteWhere { it.id == order.id }
+    println("退票成功，退票数量：$delCount......")
+}
+
+/**
+ * 菜单项 —— 改签
+ */
+private fun menuRebook() {
+    if (orders.isEmpty()) {
+        println("订单信息为空，无法使用改签功能......")
+        return
+    }
+
+    print("请输入订票人手机号：")
+    val tel = getFromConsoleWhere("手机号有误") { isNumber(it) }
+    val orderList = getOrderByTel(tel)
+    if (orderList.isEmpty()) {
+        println("订单为空......")
+        return
+    }
+
+    showOrder(orderList, true)
+    print("请输入要改签票的订单索引号（输入 -1 退出）：")
+    val orderIndex = getFromConsoleWhere("订单索引有误") { isNumber(it) && it.toInt() >= -1 && it.toInt() < orderList.size }
+    if (orderIndex.toInt()== -1) {
+        return
+    }
+
+    // 想要改签的订单
+    val order = orderList[orderIndex.toInt()]
+
+    // 从控制台获取用户想要订购的机票
+    val aviation = getAviationByConsole() ?: return
+
+    order.orderTime = Date()
+    order.flightId = aviation.id
+    // 计算差价
+    val price = aviation.price - order.price
+    order.price = aviation.price
+
+    // 获取原来 Order 在链表中的索引，用于在下面进行替换
+    val oldIndex = orders.isContainWhere { it.id == order.id }
+    orders.replace(oldIndex, order)
+
+    println("改签成功，${if (price < 0) "退还 ${abs(price)} 元差价" else "请补 $price 元差价"}......")
+}
+
+/**
+ * 菜单项 —— 查看订单
+ */
+private fun menuSearchOrder() {
+    if (orders.isEmpty()) {
+        println("订单信息为空，无法使用查看订单功能......")
+        return
+    }
+    print("请输入想要查看订单的手机号：")
+    val tel = getFromConsoleWhere("手机号有误") { isNumber(it) }
+    showOrder(getOrderByTel(tel))
+}
+
+/**
+ * 从控制台读取信息来获取符合的航班
+ */
+private fun getAviationByConsole(): FlightInfo? {
+    print("请输入出发地：")
+    val from = scan.next();
+    print("请输入目的地：")
+    val to = scan.next()
+    val date = packageDateFromConsole("订票", false)
+    val aviationList = getAviationByFromAToADate(from, to, date)
+    if (aviationList.isEmpty()) {
+        println("没有查到符合的航班......")
+        return null
+    }
+
+    // 打印查询到的航班
+    menuShowAviation(aviationList, true,"查询到的航班信息")
+    print("请输入你想要订购的航班索引号(输入 -1 返回）：")
+    val aviationIndex = getFromConsoleWhere("航班号有误") {
+        // 输入的是数字并且不能小于 0 和大于 aviationList 长度
+        isNumber(it) && it.toInt() >= -1 && it.toInt() < aviationList.size
+    }
+
+    // 输入 -1 返回
+    if (aviationIndex.toInt() == -1) {
+        return null
+    }
+
+    return aviationList[aviationIndex.toInt()]
+}
+
+
+/**
+ * 显示订单信息
+ */
+private fun showOrder(orderList: List<Order>, showIndex: Boolean = false) = printFormat("订单信息") {
+    val list = (orderList ?: listOf())
+    if (list.isEmpty()) {
+        println("订单为空......")
+        return@printFormat
+    }
+
+    println("${if (showIndex) "订单索引\t" else ""}航班号\t姓名\t年龄\t性别\t电话\t\t下单时间\t\t票价（元）\n")
+    var index = 0
+    list.forEach {
+        println("${if (showIndex) "$index\t" else ""}${it.flightId}\t${it.name}\t${it.age}\t${it.gender}\t" +
+                "${it.tel}\t\t${Tool.formatDate(it.orderTime)}\t\t${it.price}\n")
+        index++
+    }
+}
+
+/**
+ * 根据手机号获取所有订单
+ */
+private fun getOrderByTel(mTel: String): List<Order> {
+    val list = ArrayList<Order>()
+    if (orders.isEmpty()) {
+        return list
+    }
+    orders.asList().forEach {
+        if (it.tel == mTel) {
+            list.add(it)
+        }
+    }
+    return list
 }
 
 /**
@@ -659,6 +815,38 @@ private fun packageDateFromConsole(str: String, hourAMinute: Boolean = true): Da
     return Date(cal.timeInMillis)
 }
 
+/**
+ * 从控制台输入封装 Order 实体对象
+ */
+private fun packageOrderFromConsole(aviationId: String, mPrice: Int): Order {
+    print("请输入订票人姓名：")
+    val mName = scan.next()
+    print("请输入订票人年龄：")
+    val mAge = getFromConsoleWhere("年龄有误") { isNumber(it) && it.toInt() > 0 }
+    print("请输入订票人性别（男 / 女）：")
+    val mGender = getFromConsoleWhere("性别有误") { it == "男" || it == "女" }
+    print("请输入订票人电话：")
+    val mTel = getFromConsoleWhere("电话有误") { isNumber(it) }
+
+    return Order().apply {
+        name = mName
+        age = mAge.toInt()
+        gender = mGender
+        tel = mTel
+        flightId = aviationId
+        price = mPrice
+        // 当前时间戳作为订单 ID
+        id = Date().time
+    }
+}
+
+/**
+ * 判断机票订单是否已经存在
+ */
+private fun isOrderContain(mOrder: Order): Boolean {
+    return orders.isContainWhere { it.id == mOrder.id } != -1
+}
+
 
 /**
  * 根据年日月判断日是否正确
@@ -743,7 +931,7 @@ private fun getNumberFromConsole(): Int {
  */
 private fun isNumber(str: String): Boolean {
     return try {
-        str.toInt()
+        str.toLong()
         true
     } catch (e: NumberFormatException) {
         false

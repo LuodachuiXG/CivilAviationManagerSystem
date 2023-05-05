@@ -195,6 +195,22 @@ class MyLinkList<T> {
     }
 
     /**
+     * 根据条件判断某元素是否存在，并返回所在位置索引
+     */
+    fun isContainWhere(block: (T) -> Boolean): Int {
+        var i = 0
+        var temp = _head
+        while (temp != null) {
+            if (block(temp.t)) {
+                return i
+            }
+            temp = temp.next
+            i++
+        }
+        return -1
+    }
+
+    /**
      * 打印链表所有数据
      */
     fun show() {
