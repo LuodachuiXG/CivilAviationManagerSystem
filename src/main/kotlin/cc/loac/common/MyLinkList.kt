@@ -68,6 +68,11 @@ class MyLinkList<T> {
      * 删除链表中指定元素
      */
     fun delete(i: Int): Boolean {
+        // 链表为空
+        if (isEmpty()) {
+            return false
+        }
+
         // 删除位置非法
         if (i > _length - 1 || i < 0) {
             return false
@@ -85,6 +90,38 @@ class MyLinkList<T> {
         }
         _length--
         return true
+    }
+
+
+    /**
+     * 条件删除，根据自定义条件删除元素
+     */
+    fun deleteWhere(block: (T) -> Boolean): Int {
+        // 链表为空
+        if (isEmpty()) {
+            return 0;
+        }
+        var pre: Node<T>? = null
+        var temp: Node<T>? = _head
+        var delCount = 0
+        while (temp != null) {
+            if (block(temp.t)) {
+                // 符合条件
+                if (pre == null) {
+                    // 链表首元素符合条件
+                    _head = _head?.next
+                } else {
+                    // 非链表首元素，正常删除
+                    pre.next = temp.next
+                }
+                delCount++
+                _length--
+            } else {
+                pre = temp
+            }
+            temp = temp.next
+        }
+        return delCount
     }
 
     /**
@@ -146,6 +183,13 @@ class MyLinkList<T> {
      */
     fun size(): Int {
         return _length
+    }
+
+    /**
+     * 链表是否为空
+     */
+    fun isEmpty(): Boolean {
+        return _length == 0
     }
 
     /**

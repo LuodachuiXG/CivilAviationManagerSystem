@@ -42,14 +42,23 @@ fun showOptionMenu() {
         print("请输入你想要进行的操作：")
 
         when (getNumberFromConsole()) {
+            // 显示航班
             0 -> menuShowAviation(aviations.asList())
+            // 查找航班
             1 -> menuSearchAviation()
+            // 添加航班
             2 -> menuAddAviation()
+            // 导出航班
             3 -> menuExportAviations()
-            4 -> {}
+            // 删除航班
+            4 -> menuDelAviation()
+            // 订票
             5 -> {}
+            // 退票
             6 -> {}
+            // 改签
             7 -> {}
+            // 退出系统
             else -> {
                 println("退出系统......")
                 exitProcess(0)
@@ -123,7 +132,7 @@ private fun menuAddAviation() {
             println("*. 返回")
         }
         print("请输入你想要进行的操作：")
-        when(getNumberFromConsole()) {
+        when (getNumberFromConsole()) {
             0 -> {
                 // 添加航班到链表
                 packageFlightInfoFromConsole()?.let {
@@ -146,7 +155,7 @@ private fun menuAddAviation() {
  * 菜单项 —— 导出航班信息
  */
 private fun menuExportAviations() {
-    if (aviations.size() <= 0) {
+    if (aviations.isEmpty()) {
         println("航班信息为空，无法导出......")
         return
     }
@@ -189,6 +198,45 @@ private fun menuExportAviations() {
         println("导出成功，${file.absolutePath}")
     } catch (e: Exception) {
         print("导出失败，${e.message}")
+    }
+}
+
+
+/**
+ * 菜单项 —— 删除航班
+ */
+private fun menuDelAviation() {
+    if (aviations.isEmpty()) {
+        println("航班信息为空，无法删除......")
+        return
+    }
+
+    while (true) {
+        printFormat("删除航班") {
+            println("0. 根据航班号删除")
+            println("1. 根据出发地删除")
+            println("2. 根据目的地删除")
+            println("*. 返回")
+        }
+        print("请输入你想要进行的操作：")
+        val optionIndex = getNumberFromConsole()
+        when (optionIndex) {
+            0 -> print("请输入航班号：")
+            1 -> print("请输入出发地：")
+            2 -> print("请输入目的地：")
+            else -> break
+        }
+        val key = scan.next()
+        var delCount = 0
+        when (optionIndex) {
+            // 根据航班号删除
+            0 -> delCount = aviations.deleteWhere { it.id == key }
+            // 根据出发地删除
+            1 -> delCount = aviations.deleteWhere { it.from == key }
+            // 根据目的地删除
+            2 -> delCount = aviations.deleteWhere { it.to == key }
+        }
+        println("删除航班数量：$delCount")
     }
 }
 
@@ -498,10 +546,10 @@ private fun packageFlightInfoFromConsole(): FlightInfo? {
 
     // 人数位于 1 到 240 之间
     print("航班人数（Int，最大 240 人)：")
-    flightInfo.persons = getIntFromConsoleWhere("人数") { c -> c in 1..240 }
+    flightInfo.persons = getIntFromConsoleWhere("人数有误") { c -> c in 1..240 }
     // 票价必须大于 0
     print("航班票价（Int，元)：")
-    flightInfo.price = getIntFromConsoleWhere("票价") { p -> p > 0 }
+    flightInfo.price = getIntFromConsoleWhere("票价有误") { p -> p > 0 }
     return flightInfo
 }
 
