@@ -82,11 +82,13 @@ private fun menuShowAviation(mList: List<FlightInfo>? = null, showIndex: Boolean
         return@printFormat
     }
 
-    println("${if (showIndex) "航班索引\t\t" else ""}航班号\t出发地\t目的地\t\t起飞时间\t\t到达时间\t\t飞行时间（分钟）\t\t人数\t\t票价（元）\n")
+    println("${if (showIndex) "航班索引\t\t" else ""}航班号\t出发地\t目的地\t起飞时间\t\t\t\t到达时间" +
+            "\t\t\t\t飞行时间（分钟）\t人数\t\t已订人数\t\t票价（元）\n")
     var index = 0
     list.forEach {
-        println("${if (showIndex) "$index\t\t" else ""}${it.id}\t\t${it.from}\t${it.to}\t${Tool.formatDate(it.departureTime)}\t\t" +
-                "${Tool.formatDate(it.arrivalTime)}\t\t${it.flightTime}分钟\t\t${it.persons}人\t\t${it.price}元\n")
+        println("${if (showIndex) "$index\t\t\t" else ""}${it.id}\t${it.from}\t\t${it.to}\t\t${Tool.formatDate(it.departureTime)}\t\t" +
+                "${Tool.formatDate(it.arrivalTime)}\t\t${it.flightTime}分钟\t\t\t${it.persons}人" +
+                "\t${it.orderCount}人\t\t\t${it.price}元\n")
         index++
     }
 }
@@ -252,32 +254,19 @@ private fun menuDelAviation() {
  * 菜单项 —— 订票
  */
 private fun menuBook() {
-    while (true) {
-        printFormat("订购机票") {
-            println("0. 订购机票")
-            println("*. 返回")
-        }
-        print("请输入你想要进行的操作：")
-
-        when (getNumberFromConsole()) {
-            // 订购机票
-            0 -> {
-                // 从控制台获取用户想要订购的机票
-                val aviation = getAviationByConsole() ?: continue
-                // 从控制台输入封装 Order 实体类
-                val order = packageOrderFromConsole(aviation.id, aviation.price)
-                if (isOrderContain(order)) {
-                    // 订单已经存在，订票失败
-                    println("订单已存在，订票失败......")
-                    continue
-                }
-
-                orders.add(order)
-                println("订票成功，票价：${aviation.price}")
-            }
-            else -> break
-        }
+    // 从控制台获取用户想要订购的机票
+    val aviation = getAviationByConsole() ?: return
+    // 从控制台输入封装 Order 实体类
+    val order = packageOrderFromConsole(aviation.id, aviation.price)
+    if (isOrderContain(order)) {
+        // 订单已经存在，订票失败
+        println("订单已存在，订票失败......")
+        return
     }
+    aviation.orderCount++
+    aviations.replace(aviations.isContainWhere { it.id == aviation.id }, aviation)
+    orders.add(order)
+    println("订票成功，票价：${aviation.price}")
 }
 
 /**
@@ -305,6 +294,11 @@ private fun menuRefund() {
     }
 
     val order = orderList[orderIndex.toInt()]
+    val aviationIndex = aviations.isContainWhere { it.id == order.flightId }
+    val aviation = aviations.get(aviationIndex)
+    aviation!!.orderCount--
+    aviations.replace(aviationIndex, aviation)
+
     val delCount = orders.deleteWhere { it.id == order.id }
     println("退票成功，退票数量：$delCount......")
 }
@@ -338,6 +332,17 @@ private fun menuRebook() {
 
     // 从控制台获取用户想要订购的机票
     val aviation = getAviationByConsole() ?: return
+
+    // 新订购航班人数加一
+    aviation.orderCount++
+    aviations.replace(aviations.isContainWhere { it.id == aviation.id}, aviation)
+
+    // 原航班人数减 1
+    val oldAviationIndex = aviations.isContainWhere { it.id == order.flightId }
+    val oldAviation = aviations.get(oldAviationIndex)
+    oldAviation!!.orderCount--
+    aviations.replace(oldAviationIndex, oldAviation)
+
 
     order.orderTime = Date()
     order.flightId = aviation.id
@@ -407,10 +412,10 @@ private fun showOrder(orderList: List<Order>, showIndex: Boolean = false) = prin
         return@printFormat
     }
 
-    println("${if (showIndex) "订单索引\t" else ""}航班号\t姓名\t年龄\t性别\t电话\t\t下单时间\t\t票价（元）\n")
+    println("${if (showIndex) "订单索引\t" else ""}航班号\t姓名\t\t年龄\t\t性别\t\t电话\t\t\t\t下单时间\t\t\t\t票价（元）\n")
     var index = 0
     list.forEach {
-        println("${if (showIndex) "$index\t" else ""}${it.flightId}\t${it.name}\t${it.age}\t${it.gender}\t" +
+        println("${if (showIndex) "$index\t\t" else ""}${it.flightId}\t${it.name}\t${it.age}\t\t${it.gender}\t\t" +
                 "${it.tel}\t\t${Tool.formatDate(it.orderTime)}\t\t${it.price}\n")
         index++
     }

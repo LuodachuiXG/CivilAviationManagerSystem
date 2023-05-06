@@ -18,8 +18,10 @@ data class FlightInfo(
     var arrivalTime: Date = Date(),
     // 飞行时间
     var flightTime: Int = 0,
-    // 人数
+    // 额定人数
     var persons: Int = 0,
+    // 已订人数
+    var orderCount: Int = 0,
     // 票价
     var price: Int = 0
 )
