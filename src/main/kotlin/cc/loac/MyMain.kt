@@ -13,8 +13,6 @@ import kotlin.NumberFormatException
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.math.abs
-import kotlin.random.Random
-import kotlin.random.nextInt
 import kotlin.system.exitProcess
 
 val scan = Scanner(System.`in`)
@@ -28,7 +26,7 @@ fun main() {
 /**
  * 显示操作菜单
  */
-fun showOptionMenu() {
+private fun showOptionMenu() {
     while (true) {
         printFormat("loac 民航管理系统") {
             println("0. 显示航班")
@@ -103,6 +101,7 @@ private fun menuSearchAviation() {
             println("1. 按航班日期查询")
             println("2. 按出发地查找")
             println("3. 按目的地查找")
+            println("4. 按日期顺序查找")
             println("*. 返回")
         }
         print("请输入你想要进行的操作：")
@@ -123,6 +122,7 @@ private fun menuSearchAviation() {
             2 -> menuShowAviation(getAviationByFrom())
             // 按目的地查找
             3 -> menuShowAviation(getAviationByTo())
+            4 -> menuShowAviation(getAviationBySort())
             else -> return
         }
     }
@@ -535,6 +535,23 @@ private fun getAviationByTo(): List<FlightInfo> {
         }
     }
     return listResult
+}
+
+/**
+ * 按航班日期顺序查询
+ */
+private fun getAviationBySort(): List<FlightInfo> {
+    val list = aviations.asList() as ArrayList<FlightInfo>
+    for (i in list.indices) {
+        for (j in 0 until list.size - 1 - i) {
+            if (list[j].departureTime > list[j + 1].departureTime) {
+                val temp = list[j + 1]
+                list[j + 1] = list[j]
+                list[j] = temp
+            }
+        }
+    }
+    return list
 }
 
 /**
