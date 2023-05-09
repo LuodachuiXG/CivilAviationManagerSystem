@@ -406,7 +406,7 @@ private fun getAviationByConsole(): FlightInfo? {
  * 显示订单信息
  */
 private fun showOrder(orderList: List<Order>, showIndex: Boolean = false) = printFormat("订单信息") {
-    val list = (orderList ?: listOf())
+    val list = orderList
     if (list.isEmpty()) {
         println("订单为空......")
         return@printFormat
